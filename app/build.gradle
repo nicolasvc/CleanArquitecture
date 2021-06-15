@@ -1,0 +1,84 @@
+import dependencies.Versions
+import dependencies.Application
+import dependencies.Dependencies
+import dependencies.Java
+import dependencies.AndroidTestDependencies
+import dependencies.SupportDependencies
+import dependencies.AnnotationProcessing
+
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'kotlin-kapt'
+    id 'kotlin-android-extensions'
+}
+
+android {
+    compileSdkVersion Versions.compilesdk
+    buildToolsVersion "30.0.3"
+
+    defaultConfig {
+        applicationId Application.id
+        minSdkVersion Versions.minsdk
+        targetSdkVersion Versions.targetsdk
+        versionCode Application.version_code
+        versionName Application.version_name
+
+        testInstrumentationRunner AndroidTestDependencies.instrumentation_runner
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility Java.java_version
+        targetCompatibility Java.java_version
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+dependencies {
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation 'androidx.core:core-ktx:1.5.0'
+    implementation 'androidx.appcompat:appcompat:1.3.0'
+    implementation 'com.google.android.material:material:1.3.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    testImplementation 'junit:junit:4.+'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+
+    //Kotlin
+    implementation Dependencies.kotlin_standard_library
+    implementation Dependencies.kotlin_reflect
+    implementation Dependencies.ktx
+    implementation Dependencies.kotlin_coroutines
+    implementation Dependencies.kotlin_coroutines_android
+    implementation Dependencies.kotlin_coroutines_play_services
+    //Support
+    implementation SupportDependencies.appcompat
+    implementation SupportDependencies.constraintlayout
+    implementation SupportDependencies.material_design
+    implementation SupportDependencies.swipe_refresh_layout
+    //dependencies
+    implementation Dependencies.dagger
+    kapt Dependencies.daggerCompiler
+    implementation Dependencies.firebase_firestore
+    implementation Dependencies.firebase_auth
+    implementation Dependencies.firebase_analytics
+    implementation Dependencies.firebase_crashlytics
+    implementation Dependencies.retrofit_gson
+    implementation Dependencies.retrofit
+
+
+    //Annotation processing
+    //implementation AnnotationProcessing.dagger_compiler
+
+
+
+}
