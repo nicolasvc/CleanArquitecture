@@ -11,7 +11,7 @@ interface NoteDaoService {
 
     suspend fun deletesNotes(note:List<Note>):Int
 
-    suspend fun updateNote(primary: String,newTitle:String, newBody:String)
+    suspend fun updateNote(primary: String,newTitle:String, newBody:String) :Int
 
     suspend fun searchNotes():List<Note>
 
