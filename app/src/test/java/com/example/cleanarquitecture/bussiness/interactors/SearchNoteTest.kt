@@ -1,14 +1,18 @@
 package com.example.cleanarquitecture.bussiness.interactors
 
+import com.example.cleanarquitecture.business.data.cache.CacheErrors
 import com.example.cleanarquitecture.business.data.cache.abstraction.NoteCacheDataSource
 import com.example.cleanarquitecture.business.domain.model.Note
 import com.example.cleanarquitecture.business.domain.model.NoteFactory
 import com.example.cleanarquitecture.business.domain.state.DataState
 import com.example.cleanarquitecture.business.interactors.notelist.SearchNotes
+import com.example.cleanarquitecture.business.interactors.notelist.SearchNotes.Companion.SEARCH_NOTES_NO_MATCHING_RESULTS
 import com.example.cleanarquitecture.business.interactors.notelist.SearchNotes.Companion.SEARCH_NOTES_SUCCESS
+import com.example.cleanarquitecture.bussiness.data.cache.FORCE_SEARCH_NOTES_EXCEPTION
 import com.example.cleanarquitecture.bussiness.di.DependencyContainer
 import com.example.cleanarquitecture.framework.datasource.database.ORDER_BY_ASC_DATE_UPDATED
 import com.example.cleanarquitecture.framework.presentation.notelist.state.NoteListStateEvent
+import com.example.cleanarquitecture.framework.presentation.notelist.state.NoteListStateEvent.SearchNotesEvent
 import com.example.cleanarquitecture.framework.presentation.notelist.state.NoteListViewState
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -66,8 +70,8 @@ class SearchNoteTest {
             query = query,
             filterAndOrder = ORDER_BY_ASC_DATE_UPDATED,
             page = 1,
-            stateEvent = NoteListStateEvent.SearchNotesEvent()
-        ).collect(object : FlowCollector<DataState<NoteListViewState>?> {
+            stateEvent = SearchNotesEvent()
+        ).collect(object: FlowCollector<DataState<NoteListViewState>?>{
             override suspend fun emit(value: DataState<NoteListViewState>?) {
                 assertEquals(
                     value?.stateMessage?.response?.message,
@@ -76,20 +80,90 @@ class SearchNoteTest {
                 value?.data?.noteList?.let { list ->
                     results = ArrayList(list)
                 }
+
             }
         })
 
-        //confirm notes were retrieved
+        // confirm notes were retrieved
         assertTrue { results != null }
 
-        //confimr notes in cache match with notes that were retrivede
+        // confirm notes in cache match with notes that were retrieved
         val notesInCache = noteCacheDataSource.searchNotes(
             query = query,
             filterAndOrder = ORDER_BY_ASC_DATE_UPDATED,
             page = 1
         )
-        assertTrue { results?.containsAll(notesInCache) ?: false }
+        assertTrue { results?.containsAll(notesInCache)?:false }
+    }
 
+
+    @Test
+    fun randomQuery_success_confirmNoResults() = runBlocking {
+
+        val query = "hthrthrgrkgenrogn843nn4u34n934v53454hrth"
+        var results: ArrayList<Note>? = null
+        searchNotes.searchNotes(
+            query = query,
+            filterAndOrder = ORDER_BY_ASC_DATE_UPDATED,
+            page = 1,
+            stateEvent = SearchNotesEvent()
+        ).collect(object: FlowCollector<DataState<NoteListViewState>?>{
+            override suspend fun emit(value: DataState<NoteListViewState>?) {
+                assertEquals(
+                    value?.stateMessage?.response?.message,
+                    SEARCH_NOTES_NO_MATCHING_RESULTS
+                )
+                value?.data?.noteList?.let { list ->
+                    results = ArrayList(list)
+                }
+            }
+        })
+
+        // confirm nothing was retrieved
+        assertTrue { results?.run { size == 0 }?: true }
+
+        // confirm there is notes in the cache
+        val notesInCache = noteCacheDataSource.searchNotes(
+            query = "",
+            filterAndOrder = ORDER_BY_ASC_DATE_UPDATED,
+            page = 1
+        )
+        assertTrue { notesInCache.size > 0}
+    }
+
+    @Test
+    fun searchNotes_fail_confirmNoResults() = runBlocking {
+
+        val query = FORCE_SEARCH_NOTES_EXCEPTION
+        var results: ArrayList<Note>? = null
+        searchNotes.searchNotes(
+            query = query,
+            filterAndOrder = ORDER_BY_ASC_DATE_UPDATED,
+            page = 1,
+            stateEvent = SearchNotesEvent()
+        ).collect(object: FlowCollector<DataState<NoteListViewState>?>{
+            override suspend fun emit(value: DataState<NoteListViewState>?) {
+                assert(
+                    value?.stateMessage?.response?.message
+                        ?.contains(CacheErrors.CACHE_ERROR_UNKNOWN) ?: false
+                )
+                value?.data?.noteList?.let { list ->
+                    results = ArrayList(list)
+                }
+                println("results: ${results}")
+            }
+        })
+
+        // confirm nothing was retrieved
+        assertTrue { results?.run { size == 0 }?: true }
+
+        // confirm there is notes in the cache
+        val notesInCache = noteCacheDataSource.searchNotes(
+            query = "",
+            filterAndOrder = ORDER_BY_ASC_DATE_UPDATED,
+            page = 1
+        )
+        assertTrue { notesInCache.size > 0}
     }
 
 }
