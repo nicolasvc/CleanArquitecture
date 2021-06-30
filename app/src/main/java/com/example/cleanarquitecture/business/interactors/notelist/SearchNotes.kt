@@ -1,6 +1,6 @@
 package com.example.cleanarquitecture.business.interactors.notelist
 
-import com.example.cleanarquitecture.business.data.cache.CacheRespondeHandler
+import com.example.cleanarquitecture.business.data.cache.CacheResponseHandler
 import com.example.cleanarquitecture.business.data.cache.abstraction.NoteCacheDataSource
 import com.example.cleanarquitecture.business.data.util.safeCacheCall
 import com.example.cleanarquitecture.business.domain.model.Note
@@ -22,10 +22,10 @@ class SearchNotes(
     ): Flow<DataState<NoteListViewState>?> = flow {
 
         var updatedPage = page
-        if (page <= 0) {
+        if(page <= 0){
             updatedPage = 1
         }
-        val cacheResult = safeCacheCall(Dispatchers.IO) {
+        val cacheResult = safeCacheCall(Dispatchers.IO){
             noteCacheDataSource.searchNotes(
                 query = query,
                 filterAndOrder = filterAndOrder,
@@ -33,15 +33,17 @@ class SearchNotes(
             )
         }
 
-        val responseNew = object : CacheRespondeHandler<NoteListViewState, List<Note>>(
+        val response = object: CacheResponseHandler<NoteListViewState, List<Note>>(
             response = cacheResult,
             stateEvent = stateEvent
-        ) {
-            override fun handleSucces(resultObject: List<Note>): DataState<NoteListViewState> {
-                var message: String? = SEARCH_NOTES_SUCCESS
+        ){
+            override suspend fun handleSuccess(resultObj: List<Note>): DataState<NoteListViewState>? {
+                var message: String? =
+                    SEARCH_NOTES_SUCCESS
                 var uiComponentType: UIComponentType? = UIComponentType.None()
-                if (resultObject.isEmpty()) {
-                    message = SEARCH_NOTES_NO_MATCHING_RESULTS
+                if(resultObj.size == 0){
+                    message =
+                        SEARCH_NOTES_NO_MATCHING_RESULTS
                     uiComponentType = UIComponentType.Toast()
                 }
                 return DataState.data(
@@ -51,15 +53,14 @@ class SearchNotes(
                         messageType = MessageType.Success()
                     ),
                     data = NoteListViewState(
-                        noteList = ArrayList(resultObject)
+                        noteList = ArrayList(resultObj)
                     ),
                     stateEvent = stateEvent
                 )
             }
         }.getResult()
 
-        emit(responseNew)
-
+        emit(response)
     }
 
     companion object {

@@ -1,6 +1,6 @@
 package com.example.cleanarquitecture.business.interactors.notelist
 
-import com.example.cleanarquitecture.business.data.cache.CacheRespondeHandler
+import com.example.cleanarquitecture.business.data.cache.CacheResponseHandler
 import com.example.cleanarquitecture.business.data.cache.abstraction.NoteCacheDataSource
 import com.example.cleanarquitecture.business.data.network.abstraction.NoteNetworkDataSource
 import com.example.cleanarquitecture.business.data.util.safeApiCall
@@ -12,6 +12,7 @@ import com.example.cleanarquitecture.framework.presentation.notelist.state.NoteL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import java.util.*
 
 class InsertNewNote(
     private val noteCacheDataSource: NoteCacheDataSource,
@@ -22,26 +23,29 @@ class InsertNewNote(
     fun insertNewNote(
         id: String? = null,
         title: String,
+        body: String,
         stateEvent: StateEvent
-    ): Flow<DataState<NoteListViewState>> = flow {
+    ): Flow<DataState<NoteListViewState>?> = flow {
+
         val newNote = noteFactory.createSingleNote(
-            id = id,
+            id = id ?: UUID.randomUUID().toString(),
             title = title,
-            body = ""
+            body = body
         )
-        val cacheResult = safeCacheCall(Dispatchers.IO) {
+        val cacheResult = safeCacheCall(Dispatchers.IO){
             noteCacheDataSource.insertNote(newNote)
         }
 
-        val cacheResponse = object : CacheRespondeHandler<NoteListViewState, Long>(
+        val cacheResponse = object: CacheResponseHandler<NoteListViewState, Long>(
             response = cacheResult,
             stateEvent = stateEvent
-        ) {
-            override fun handleSucces(resultObject: Long): DataState<NoteListViewState> {
-                return if (resultObject > 0) {
-                    val viewState = NoteListViewState(
-                        newNote = newNote
-                    )
+        ){
+            override suspend fun handleSuccess(resultObj: Long): DataState<NoteListViewState>? {
+                return if(resultObj > 0){
+                    val viewState =
+                        NoteListViewState(
+                            newNote = newNote
+                        )
                     DataState.data(
                         response = Response(
                             message = INSERT_NOTE_SUCCESS,
@@ -51,7 +55,8 @@ class InsertNewNote(
                         data = viewState,
                         stateEvent = stateEvent
                     )
-                } else {
+                }
+                else{
                     DataState.data(
                         response = Response(
                             message = INSERT_NOTE_FAILED,
@@ -64,12 +69,15 @@ class InsertNewNote(
                 }
             }
         }.getResult()
+
         emit(cacheResponse)
-        updateNetwork(cacheResponse.stateMessage?.response!!.message, newNote)
+
+        updateNetwork(cacheResponse?.stateMessage?.response?.message, newNote)
     }
 
-    private suspend fun updateNetwork(message: String?, newNote: Note) {
-        if (message.equals(INSERT_NOTE_SUCCESS)) {
+    private suspend fun updateNetwork(cacheResponse: String?, newNote: Note ){
+        if(cacheResponse.equals(INSERT_NOTE_SUCCESS)){
+
             safeApiCall(Dispatchers.IO){
                 noteNetworkDataSource.insertOrUpdateNote(newNote)
             }

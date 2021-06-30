@@ -1,4 +1,4 @@
-package com.example.cleanarquitecture.bussiness.interactors
+package com.example.cleanarquitecture.bussiness.interactors.notelist
 
 import com.example.cleanarquitecture.business.data.cache.CacheErrors
 import com.example.cleanarquitecture.business.data.cache.abstraction.NoteCacheDataSource

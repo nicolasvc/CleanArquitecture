@@ -1,4 +1,4 @@
-package com.example.cleanarquitecture.bussiness.interactors
+package com.example.cleanarquitecture.bussiness.interactors.notelist
 
 import com.example.cleanarquitecture.business.data.cache.CacheErrors
 import com.example.cleanarquitecture.business.data.cache.abstraction.NoteCacheDataSource
@@ -11,14 +11,12 @@ import com.example.cleanarquitecture.business.interactors.notelist.SearchNotes.C
 import com.example.cleanarquitecture.bussiness.data.cache.FORCE_SEARCH_NOTES_EXCEPTION
 import com.example.cleanarquitecture.bussiness.di.DependencyContainer
 import com.example.cleanarquitecture.framework.datasource.database.ORDER_BY_ASC_DATE_UPDATED
-import com.example.cleanarquitecture.framework.presentation.notelist.state.NoteListStateEvent
 import com.example.cleanarquitecture.framework.presentation.notelist.state.NoteListStateEvent.SearchNotesEvent
 import com.example.cleanarquitecture.framework.presentation.notelist.state.NoteListViewState
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
